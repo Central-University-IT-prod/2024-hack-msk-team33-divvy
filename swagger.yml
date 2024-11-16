@@ -1,0 +1,420 @@
+openapi: 3.0.0
+info:
+  title: "API для подсчета общих расходов"
+  version: "1.0.0"
+  description: "API, позволяющий отслеживать и подсчитывать общие расходы в группах."
+servers:
+  - url: "https://{{sensitive_data}}"
+
+paths:
+  /groups:
+    post:
+      summary: "Создать новую группу"
+      tags:
+        - Группы
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_name:
+                  type: string
+                  example: "Поход на природу"
+      responses:
+        '201':
+          description: "Группа успешно создана"
+    get:
+      summary: "Получить список групп"
+      tags:
+        - Группы
+      responses:
+        '200':
+          description: "Список групп пользователя"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+
+  /groups/{group_id}:
+    get:
+      summary: "Получить информацию о группе"
+      tags:
+        - Группы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: "Информация о группе"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          description: "Группа не найдена"
+    patch:
+      summary: "Закрыть группу"
+      tags:
+        - Группы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: "Группа успешно закрыта"
+        '403':
+          description: "Доступ запрещен"
+        '404':
+          description: "Группа не найдена"
+
+  /groups/{group_id}/remove_user:
+    delete:
+      summary: "Удалить пользователя из группы"
+      tags:
+        - Группы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2
+      responses:
+        '200':
+          description: "Пользователь удален из группы"
+        '403':
+          description: "Доступ запрещен"
+        '404':
+          description: "Группа или пользователь не найдены"
+
+  /groups/{group_id}/invite:
+    post:
+      summary: "Создать пригласительную ссылку"
+      tags:
+        - Группы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: "Пригласительная ссылка создана"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invite_link:
+                    type: string
+                    example: "https://t.me/{{sensitive_data}}?start=abcdef"
+        '404':
+          description: "Группа не найдена"
+
+  /groups/{group_id}/expenses:
+    get:
+      summary: "Получить список расходов в группе"
+      tags:
+        - Расходы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: "Список расходов"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '404':
+          description: "Группа не найдена"
+
+  /debts/{group_id}:
+    get:
+      summary: "Получить задолженности по группе"
+      tags:
+        - Долги
+      parameters:
+
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: "Список задолженностей"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Debt'
+        '404':
+          description: "Группа не найдена"
+
+  /expense/{group_id}/new_expense:
+    post:
+      summary: "Создать новый расход"
+      tags:
+        - Расходы
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Покупка продуктов"
+                amount:
+                  type: number
+                  format: float
+                  example: 500.00
+                payer_user_id:
+                  type: integer
+                  example: 2
+                shares:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                        example: 3
+                      amount:
+                        type: number
+                        format: float
+                        example: 250.00
+      responses:
+        '201':
+          description: "Расход успешно создан"
+        '400':
+          description: "Некорректные данные"
+        '404':
+          description: "Группа не найдена"
+
+  /payments:
+    post:
+      summary: "Закрыть долг"
+      tags:
+        - Платежи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from_user_id:
+                  type: integer
+                  example: 3
+                to_user_id:
+                  type: integer
+                  example: 2
+                group_id:
+                  type: integer
+                  example: 1
+                amount:
+                  type: number
+                  format: float
+                  example: 250.00
+      responses:
+        '200':
+          description: "Долг успешно закрыт"
+        '400':
+          description: "Некорректные данные"
+        '404':
+          description: "Долг не найден"
+
+  /payments/{expense_id}/confirm:
+    get:
+      summary: "Подтвердить оплату"
+      tags:
+        - Платежи
+      parameters:
+        - name: expense_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 5
+      responses:
+        '200':
+          description: "Оплата подтверждена"
+        '404':
+          description: "Расход не найден"
+
+  /login:
+    post:
+      summary: "Войти в систему"
+      tags:
+        - Аутентификация
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tg_id:
+                  type: string
+                  example: "123456789"
+                name:
+                  type: string
+                  example: "Иван Иванов"
+                card_number:
+                  type: string
+                  example: "1234-5678-9012-3456"
+                phone:
+                  type: string
+                  example: "+79991234567"
+      responses:
+        '200':
+          description: "Успешный вход"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: "Некорректные данные"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        tg_id:
+          type: string
+
+          example: "123456789"
+        name:
+          type: string
+          example: "Иван Иванов"
+        card_number:
+          type: string
+          example: "1234-5678-9012-3456"
+        phone:
+          type: string
+          example: "+79991234567"
+        registration_date:
+          type: string
+          format: date-time
+          example: "2023-10-05T14:48:00.000Z"
+
+    Group:
+      type: object
+      properties:
+        group_id:
+          type: integer
+          example: 1
+        group_name:
+          type: string
+          example: "Поход на природу"
+        created_by:
+          $ref: '#/components/schemas/User'
+        created_date:
+          type: string
+          format: date-time
+          example: "2023-10-05T14:48:00.000Z"
+        closed_date:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        status:
+          type: string
+          enum: ["active", "archived"]
+          example: "active"
+
+    Expense:
+      type: object
+      properties:
+        expense_id:
+          type: integer
+          example: 5
+        group:
+          $ref: '#/components/schemas/Group'
+        name:
+          type: string
+          example: "Покупка продуктов"
+        amount:
+          type: number
+          format: float
+          example: 500.00
+        payer_user:
+          $ref: '#/components/schemas/User'
+        date_created:
+          type: string
+          format: date-time
+          example: "2023-10-05T14:50:00.000Z"
+
+    Debt:
+      type: object
+      properties:
+        from_user:
+          $ref: '#/components/schemas/User'
+        to_user:
+          $ref: '#/components/schemas/User'
+        amount:
+          type: number
+          format: float
+          example: 250.00
+        group:
+          $ref: '#/components/schemas/Group'
+        confirmed_from:
+          type: boolean
+          example: true
+        confirmed_to:
+          type: boolean
+          example: false
+
+tags:
+  - name: Группы
+    description: "Операции с группами"
+  - name: Расходы
+    description: "Операции с расходами"
+  - name: Долги
+    description: "Операции с долгами"
+  - name: Платежи
+    description: "Операции с платежами"
+  - name: Аутентификация
+    description: "Аутентификация пользователей"

@@ -1,0 +1,8 @@
+fastapi==0.115.0
+uvicorn[standard]
+pydantic==2.9.0
+peewee
+pyjwt
+psycopg2-binary>=2.8.5; sys_platform == "linux" or sys_platform == "darwin"
+psycopg2>=2.8.5; sys_platform == "win32"
+aiogram==2.7

@@ -1,0 +1,3 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://{{sensitive_data}}/prod-team-33/diwy_frontend
